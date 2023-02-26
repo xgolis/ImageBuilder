@@ -1,7 +1,13 @@
 package app
 
-import "fmt"
+// type Client struct {
+// 	GitRepoPath string
+// 	Username    string
+// }
 
-func NewClient() {
-	fmt.Println(":Xddxdx")
-}
+// func NewClient(path, username string) *Client {
+// 	return &Client{
+// 		GitRepoPath: path,
+// 		Username:    username,
+// 	}
+// }

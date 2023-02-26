@@ -1,7 +1,12 @@
 package git
 
-import "fmt"
+type Git struct {
+	GitRepoPath string `json:"gitRepo,omitempty"`
+	GitToken    string `json:"gitToken,omitempty"`
+	Username    string `json:"username,omitempty"`
+}
 
-func Test() {
-	fmt.Printf("haha")
+func Pull(gitStruct Git) error {
+	// fmt.Fprintf(w, "haha %s", gitStruct.GitRepoPath)
+	return nil
 }
