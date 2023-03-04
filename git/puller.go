@@ -17,7 +17,7 @@ type Git struct {
 }
 
 func Pull(gitStruct Git) (string, error) {
-	_, err := os.Create("repo")
+	err := os.Mkdir("repo", os.ModePerm)
 	if err != nil {
 		return "", err
 	}
@@ -27,7 +27,7 @@ func Pull(gitStruct Git) (string, error) {
 		Auth: &gitHttp.BasicAuth{Username: gitStruct.Username, Password: gitStruct.GitToken},
 	})
 	if err != nil {
-		fmt.Printf("error pulling repo: %v", err)
+		fmt.Printf("%v", err)
 		return "", err
 	}
 
