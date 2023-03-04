@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
+	"github.com/xgolis/ImageBuilder/builder"
 	"github.com/xgolis/ImageBuilder/git"
 )
 
@@ -34,9 +36,17 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// fmt.Print(body.GitRepoPath)
-	err = git.Pull(gitStruct)
+	path, err := git.Pull(gitStruct)
 	if err != nil {
 		fmt.Fprintf(w, "error while pulling git repository: %v", err)
 	}
 
+	image, err := builder.BuildRepo(path)
+	if err != nil {
+		fmt.Fprintf(w, "error building image: %v", err)
+	}
+
+	fmt.Printf("Builder image: %s", image)
+
+	os.RemoveAll("./repo")
 }

@@ -3,8 +3,6 @@ package app
 import (
 	"net/http"
 	"time"
-
-	"github.com/xgolis/ImageBuilder/builder"
 )
 
 type App struct {
@@ -12,7 +10,7 @@ type App struct {
 }
 
 func NewApp() *App {
-	builder.Testik()
+	// builder.Testik()
 
 	mux := MakeHandlers()
 
