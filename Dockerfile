@@ -1,2 +1,2 @@
 FROM golang:latest
-CMD ['echo', ' haha']
+CMD ["echo", " hah"]
