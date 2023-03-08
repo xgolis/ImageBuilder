@@ -41,12 +41,13 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "error while pulling git repository: %v", err)
 	}
 
-	image, err := builder.BuildRepo(path)
+	fmt.Println(gitStruct, path)
+	image, err := builder.BuildRepo(path, gitStruct.Username)
 	if err != nil {
 		fmt.Fprintf(w, "error building image: %v", err)
 	}
 
-	fmt.Printf("Builder image: %s", image)
+	fmt.Printf("Builder image: %s\n", image)
 
-	os.RemoveAll("./repo")
+	os.RemoveAll("./" + gitStruct.Username)
 }
