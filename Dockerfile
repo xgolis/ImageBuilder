@@ -1,2 +1,3 @@
 FROM golang:latest
-CMD ["echo", " hah"]
+COPY . .
+CMD ["ls", "-la"]
