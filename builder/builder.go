@@ -1,19 +1,17 @@
 package builder
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/jhoonb/archivex"
 )
 
 type DockerClient struct {
@@ -65,41 +63,25 @@ func BuildRepo(dockerfilePath, username string) (string, error) {
 }
 
 func (c *DockerClient) buildImage() error {
-	buf := new(bytes.Buffer)
-	tw := tar.NewWriter(buf)
-	defer tw.Close()
+	// source: https://stackoverflow.com/questions/46878793/golang-docker-api-reports-invalid-argument-while-hitting-imagebuild
+	os.MkdirAll("container/"+c.Username, 0755)
+	tar := new(archivex.TarFile)
+	tar.Create("container/" + c.Username + "/conf.tar")
+	tar.AddAll(c.Username, false)
+	tar.Close()
+	// doriesit vymazavanie
 
-	dockerFile := "Dockerfile"
-	dockerFileReader, err := os.Open(c.Path)
-	if err != nil {
-		log.Fatal(err, " :unable to open Dockerfile")
-	}
-	readDockerFile, err := ioutil.ReadAll(dockerFileReader)
-	if err != nil {
-		log.Fatal(err, " :unable to read dockerfile")
-	}
-
-	tarHeader := &tar.Header{
-		Name: dockerFile,
-		Size: int64(len(readDockerFile)),
-	}
-	err = tw.WriteHeader(tarHeader)
-	if err != nil {
-		log.Fatal(err, " :unable to write tar header")
-	}
-	_, err = tw.Write(readDockerFile)
-	if err != nil {
-		log.Fatal(err, " :unable to write tar body")
-	}
-	dockerFileTarReader := bytes.NewReader(buf.Bytes())
+	dockerBuildContext, err := os.Open("container/" + c.Username + "/conf.tar")
+	defer dockerBuildContext.Close()
 
 	imageBuildResponse, err := c.Client.ImageBuild(
 		c.Ctx,
-		dockerFileTarReader,
+		dockerBuildContext,
 		types.ImageBuildOptions{
-			Tags:       []string{c.Username},
-			Context:    dockerFileTarReader,
-			Dockerfile: dockerFile,
+			Tags:    []string{"xgolis/" + c.Username},
+			Context: dockerBuildContext,
+			// ContextDir: "./" + c.Username,
+			Dockerfile: "Dockerfile",
 			Remove:     true})
 	if err != nil {
 		log.Fatal(err, " :unable to build docker image")
@@ -121,8 +103,8 @@ func (c *DockerClient) findImage() error {
 	}
 
 	for i := 0; i < len(images); i++ {
-		if images[i].RepoTags[0] == c.Username+":latest" {
-			c.ImageTag = c.Username + ":latest"
+		if images[i].RepoTags[0] == "xgolis/"+c.Username+":latest" {
+			c.ImageTag = images[i].RepoTags[0]
 			c.ImageName = images[i].ID
 			return nil
 		}
@@ -155,11 +137,15 @@ func (c *DockerClient) pushImage() error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(authConfigEncoded)
 
-	body, err := c.Client.ImagePush(c.Ctx, c.ImageName, types.ImagePushOptions{
+	body, err := c.Client.ImagePush(c.Ctx, c.ImageTag, types.ImagePushOptions{
 		RegistryAuth: authStr,
 	})
 	if err != nil {
 		return err
+	}
+	_, err = io.Copy(os.Stdout, body)
+	if err != nil {
+		log.Fatal(err, " :unable to read image build response")
 	}
 	defer body.Close()
 
