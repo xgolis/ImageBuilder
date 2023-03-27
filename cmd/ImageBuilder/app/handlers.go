@@ -27,24 +27,28 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		fmt.Fprintf(w, "error while reading request: %v", err)
+		return
 	}
 
 	var gitStruct git.Git
 	err = json.Unmarshal(body, &gitStruct)
 	if err != nil {
 		fmt.Fprintf(w, "unmarshal error: %v", err)
+		return
 	}
 
 	// fmt.Print(body.GitRepoPath)
 	path, err := git.Pull(gitStruct)
 	if err != nil {
 		fmt.Fprintf(w, "error while pulling git repository: %v", err)
+		return
 	}
 
 	fmt.Println(gitStruct, path)
 	image, err := builder.BuildRepo(path, gitStruct.Username)
 	if err != nil {
 		fmt.Fprintf(w, "error building image: %v", err)
+		return
 	}
 
 	fmt.Printf("Builder image: %s\n", image)

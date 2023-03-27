@@ -4,6 +4,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,10 +17,12 @@ import (
 )
 
 type DockerClient struct {
-	Client   *client.Client
-	Ctx      context.Context
-	Path     string
-	Username string
+	Client    *client.Client
+	Ctx       context.Context
+	Path      string
+	Username  string
+	ImageName string
+	ImageTag  string
 }
 
 const DefaultDockerHost = "unix:///var/run/docker.sock"
@@ -44,14 +48,20 @@ func BuildRepo(dockerfilePath, username string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	image, err := dockerClient.findImage()
+
+	err = dockerClient.findImage()
 	if err != nil {
 		return "", fmt.Errorf("error while finding image: %v", err)
 	}
-	fmt.Printf("image built: %s", image)
+	fmt.Printf("\nimage built: %s\n", dockerClient.ImageName)
 	// fmt.Println("konec")
 
-	return image, err
+	err = dockerClient.pushImage()
+	if err != nil {
+		return "", fmt.Errorf("error while pushing image: %v", err)
+	}
+	fmt.Println("malo by to tam byt idk")
+	return dockerClient.ImageName, err
 }
 
 func (c *DockerClient) buildImage() error {
@@ -102,18 +112,56 @@ func (c *DockerClient) buildImage() error {
 	return nil
 }
 
-func (c *DockerClient) findImage() (string, error) {
+func (c *DockerClient) findImage() error {
 	images, err := c.Client.ImageList(c.Ctx, types.ImageListOptions{
 		All: true,
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	for i := 0; i < len(images); i++ {
 		if images[i].RepoTags[0] == c.Username+":latest" {
-			return images[i].ID, nil
+			c.ImageTag = c.Username + ":latest"
+			c.ImageName = images[i].ID
+			return nil
 		}
 	}
-	return "", fmt.Errorf("did not find desired image")
+	return fmt.Errorf("did not find desired image")
+}
+
+func getAuthConfig() (*types.AuthConfig, error) {
+	username := os.Getenv("DOCKER_USERNAME")
+	password := os.Getenv("DOCKER_PASSWORD")
+
+	if username == "" || password == "" {
+		return nil, fmt.Errorf("Missing docker credentials")
+	}
+	return &types.AuthConfig{
+		Username: username,
+		Password: password,
+	}, nil
+}
+
+func (c *DockerClient) pushImage() error {
+	authConfig, err := getAuthConfig()
+	if err != nil {
+		return err
+	}
+
+	authConfigEncoded, err := json.Marshal(authConfig)
+	if err != nil {
+		panic(err)
+	}
+	authStr := base64.URLEncoding.EncodeToString(authConfigEncoded)
+
+	body, err := c.Client.ImagePush(c.Ctx, c.ImageName, types.ImagePushOptions{
+		RegistryAuth: authStr,
+	})
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+
+	return nil
 }
