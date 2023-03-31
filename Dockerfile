@@ -1,4 +1,6 @@
 FROM golang:latest as build
+RUN ls -la
+RUN ls -la ./cmd/...
 RUN CGO_ENABLE=0 go install -a -v -work ./cmd/...
 
 FROM alpine:latest
