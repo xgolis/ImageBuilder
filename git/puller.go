@@ -8,12 +8,15 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/xgolis/ImageBuilder/builder"
 )
 
 type Git struct {
-	GitRepoPath string `json:"gitRepo,omitempty"`
-	GitToken    string `json:"gitToken,omitempty"`
-	Username    string `json:"username,omitempty"`
+	GitRepoPath string        `json:"gitRepo,omitempty"`
+	GitToken    string        `json:"gitToken,omitempty"`
+	Username    string        `json:"username,omitempty"`
+	Args        []builder.Arg `json:"args,omitempty"`
+	AppName     string        `json:"appname,omitempty"`
 }
 
 func Pull(gitStruct Git) (string, error) {

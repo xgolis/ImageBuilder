@@ -23,6 +23,11 @@ type DockerClient struct {
 	ImageTag  string
 }
 
+type Arg struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
 const DefaultDockerHost = "unix:///var/run/docker.sock"
 
 func getDockerClient(client *client.Client, path string, username string) *DockerClient {
@@ -34,7 +39,7 @@ func getDockerClient(client *client.Client, path string, username string) *Docke
 	}
 }
 
-func BuildRepo(dockerfilePath, username string) (string, error) {
+func BuildRepo(dockerfilePath, username, app string, args []Arg) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Fatal(err, " :unable to init client")
@@ -42,12 +47,12 @@ func BuildRepo(dockerfilePath, username string) (string, error) {
 
 	dockerClient := getDockerClient(cli, dockerfilePath, username)
 
-	err = dockerClient.buildImage()
+	err = dockerClient.buildImage(app, args)
 	if err != nil {
 		return "", err
 	}
 
-	err = dockerClient.findImage()
+	err = dockerClient.findImage(app)
 	if err != nil {
 		return "", fmt.Errorf("error while finding image: %v", err)
 	}
@@ -62,25 +67,31 @@ func BuildRepo(dockerfilePath, username string) (string, error) {
 	return dockerClient.ImageName, err
 }
 
-func (c *DockerClient) buildImage() error {
-	// source: https://stackoverflow.com/questions/46878793/golang-docker-api-reports-invalid-argument-while-hitting-imagebuild
-	os.MkdirAll("container/"+c.Username, 0755)
+func (c *DockerClient) buildImage(app string, args []Arg) error {
+	// dockerBuildContext source: https://stackoverflow.com/questions/46878793/golang-docker-api-reports-invalid-argument-while-hitting-imagebuild
+	os.MkdirAll("container/"+app, 0755)
 	tar := new(archivex.TarFile)
-	tar.Create("container/" + c.Username + "/conf.tar")
-	tar.AddAll(c.Username, false)
+	tar.Create("container/" + app + "/conf.tar")
+	tar.AddAll(app, false)
 	tar.Close()
 	// doriesit vymazavanie
 
-	dockerBuildContext, err := os.Open("container/" + c.Username + "/conf.tar")
+	dockerBuildContext, err := os.Open("container/" + app + "/conf.tar")
 	defer dockerBuildContext.Close()
+
+	buildArgs := make(map[string]*string)
+	for _, env := range args {
+		buildArgs[env.Name] = &env.Value
+	}
 
 	imageBuildResponse, err := c.Client.ImageBuild(
 		c.Ctx,
 		dockerBuildContext,
 		types.ImageBuildOptions{
-			Tags:    []string{"xgolis/" + c.Username},
+			Tags:    []string{"xgolis/" + app},
 			Context: dockerBuildContext,
 			// ContextDir: "./" + c.Username,
+			BuildArgs:  buildArgs,
 			Dockerfile: "Dockerfile",
 			Remove:     true})
 	if err != nil {
@@ -94,7 +105,7 @@ func (c *DockerClient) buildImage() error {
 	return nil
 }
 
-func (c *DockerClient) findImage() error {
+func (c *DockerClient) findImage(app string) error {
 	images, err := c.Client.ImageList(c.Ctx, types.ImageListOptions{
 		All: true,
 	})
@@ -103,7 +114,7 @@ func (c *DockerClient) findImage() error {
 	}
 
 	for i := 0; i < len(images); i++ {
-		if images[i].RepoTags[0] == "xgolis/"+c.Username+":latest" {
+		if images[i].RepoTags[0] == "xgolis/"+app+":latest" {
 			c.ImageTag = images[i].RepoTags[0]
 			c.ImageName = images[i].ID
 			return nil

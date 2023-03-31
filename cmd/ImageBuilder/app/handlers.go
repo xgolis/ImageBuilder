@@ -45,7 +45,7 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Println(gitStruct, path)
-	image, err := builder.BuildRepo(path, gitStruct.Username)
+	image, err := builder.BuildRepo(path, gitStruct.Username, gitStruct.AppName, gitStruct.Args)
 	if err != nil {
 		fmt.Fprintf(w, "error building image: %v", err)
 		return
