@@ -1,8 +1,7 @@
 FROM golang:latest as build
+WORKDIR /usr/local/bin
 COPY . .
-RUN CGO_ENABLE=0 go install -a -v -work ./cmd/...
-
-FROM alpine:latest
-COPY --from=build /gobin/golang-app /usr/local/bin/golang-app
+RUN cd cmd/ImageBuilder
+RUN go build -o ../../ImageBuilderApp
 EXPOSE 8080
-ENTRYPOINT [ "/usr/local/bin/golang-app" ]
+ENTRYPOINT [ "/usr/local/bin/ImageBuilderApp" ]
