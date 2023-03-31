@@ -20,17 +20,17 @@ type Git struct {
 }
 
 func Pull(gitStruct Git) (string, error) {
-	_, err := os.ReadDir("./" + gitStruct.Username)
+	_, err := os.ReadDir("./" + gitStruct.AppName)
 	if err == nil {
-		os.RemoveAll("./" + gitStruct.Username)
+		os.RemoveAll("./" + gitStruct.AppName)
 		fmt.Println("FOUND DIR REMOVING")
 	}
-	err = os.Mkdir(gitStruct.Username, os.ModePerm)
+	err = os.Mkdir(gitStruct.AppName, os.ModePerm)
 	if err != nil {
 		return "", err
 	}
 	// Clones the repository into the worktree
-	_, err = git.PlainClone("./"+gitStruct.Username, false, &git.CloneOptions{
+	_, err = git.PlainClone("./"+gitStruct.AppName, false, &git.CloneOptions{
 		URL:  gitStruct.GitRepoPath,
 		Auth: &gitHttp.BasicAuth{Username: gitStruct.Username, Password: gitStruct.GitToken},
 	})
@@ -39,7 +39,7 @@ func Pull(gitStruct Git) (string, error) {
 		return "", err
 	}
 
-	file, err := findDockerfile("./" + gitStruct.Username)
+	file, err := findDockerfile("./" + gitStruct.AppName)
 	if err != nil {
 		return "", err
 	}
