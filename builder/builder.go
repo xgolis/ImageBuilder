@@ -28,7 +28,7 @@ type Arg struct {
 	Value string `json:"value,omitempty"`
 }
 
-const DefaultDockerHost = "unix:///var/run/docker.sock"
+const DefaultDockerHost = "unix:///var/run/cri-dockerd.sock"
 
 func getDockerClient(client *client.Client, path string, username string) *DockerClient {
 	return &DockerClient{
