@@ -67,8 +67,8 @@ func BuildRepo(dockerfilePath, username, app string, args []Arg) (string, error)
 	return dockerClient.ImageName, err
 }
 
+// dockerBuildContext source: https://stackoverflow.com/questions/46878793/golang-docker-api-reports-invalid-argument-while-hitting-imagebuild
 func (c *DockerClient) buildImage(app string, args []Arg) error {
-	// dockerBuildContext source: https://stackoverflow.com/questions/46878793/golang-docker-api-reports-invalid-argument-while-hitting-imagebuild
 	os.MkdirAll("container/"+app, 0755)
 	tar := new(archivex.TarFile)
 	tar.Create("container/" + app + "/conf.tar")
@@ -95,12 +95,14 @@ func (c *DockerClient) buildImage(app string, args []Arg) error {
 			Dockerfile: "Dockerfile",
 			Remove:     true})
 	if err != nil {
-		log.Fatal(err, " :unable to build docker image")
+		return err
+		// log.Fatal(err, " :unable to build docker image")
 	}
 	defer imageBuildResponse.Body.Close()
 	_, err = io.Copy(os.Stdout, imageBuildResponse.Body)
 	if err != nil {
-		log.Fatal(err, " :unable to read image build response")
+		return err
+		// log.Fatal(err, " :unable to read image build response")
 	}
 	return nil
 }
@@ -144,6 +146,7 @@ func (c *DockerClient) pushImage() error {
 
 	authConfigEncoded, err := json.Marshal(authConfig)
 	if err != nil {
+		// return err
 		panic(err)
 	}
 	authStr := base64.URLEncoding.EncodeToString(authConfigEncoded)
@@ -156,7 +159,8 @@ func (c *DockerClient) pushImage() error {
 	}
 	_, err = io.Copy(os.Stdout, body)
 	if err != nil {
-		log.Fatal(err, " :unable to read image build response")
+		return err
+		// log.Fatal(err, " :unable to read image build response")
 	}
 	defer body.Close()
 
