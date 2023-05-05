@@ -54,11 +54,11 @@ spec:
           # Enable this if you are using a configmap
           volumeMounts:
             - name: docker-socket
-              mountPath: /run/containerd/containerd.sock
+              mountPath: unix:///var/run/docker.sock
       volumes:
         - name: docker-socket
           hostPath:
-            path: /run/containerd/containerd.sock
+            path: unix:///var/run/docker.sock
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
