@@ -52,14 +52,13 @@ spec:
             - secretRef:
                 name: "{{ include "helm.fullname" . }}-secret"
           # Enable this if you are using a configmap
-          # volumeMounts:
-          #   - name: app-cfg-volume
-          #     mountPath: /config
-          #     readOnly: true
-      # volumes:
-      #   - name: app-cfg-volume
-      #     configMap:
-      #       name: {{ include "helm.fullname" .}}-server-config
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /run/containerd/containerd.sock
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /run/containerd/containerd.sock
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

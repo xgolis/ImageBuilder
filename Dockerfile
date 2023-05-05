@@ -1,7 +1,10 @@
 FROM golang:latest as build
-WORKDIR /usr/local/bin
+WORKDIR /app
 COPY . .
-WORKDIR /usr/local/bin/cmd/ImageBuilder
-RUN go build -o ../../ImageBuilderApp
-EXPOSE 8080
-ENTRYPOINT [ "/usr/local/bin/ImageBuilderApp" ]
+RUN cd cmd/ImageBuilder && \
+    go build -o ../../ImageBuilder
+
+FROM redhat/ubi8:latest
+COPY --from=build /app/ImageBuilder .
+EXPOSE 8082
+ENTRYPOINT [ "./ImageBuilder" ]
