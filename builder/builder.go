@@ -104,6 +104,11 @@ func (c *DockerClient) buildImage(app string, args []Arg) error {
 		return err
 		// log.Fatal(err, " :unable to read image build response")
 	}
+
+	err = os.RemoveAll("container/")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

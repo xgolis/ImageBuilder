@@ -51,7 +51,18 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Printf("Builder image: %s\n", image)
+	fmt.Printf("Builded image: %s\n", image)
 
 	os.RemoveAll("./" + gitStruct.Username)
+
+	statusOK := map[string]string{"status": "ok"}
+
+	statusJson, err := json.Marshal(statusOK)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(statusJson)
 }
