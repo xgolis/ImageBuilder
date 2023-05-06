@@ -59,5 +59,6 @@ jobs:
             --install -n ${{env.NAMESPACE}} --version ${{ github.sha }} \
             --set "image.fullImage=${{ secrets.DOCKERHUB_USERNAME }}/${{env.APPNAME}}:latest" \
             --set "app.namespace=${{env.NAMESPACE}}" --force \
-            --set "app.examplePassword=pass"
+            --set "app.dockerUsername=${{ secrets.DOCKERHUB_USERNAME }}" \
+            --set "app.dockerPassword=${{ secrets.DOCKERHUB_PASSWORD }}"
         # --set-file "app.exampleConfig=/path/to/config"

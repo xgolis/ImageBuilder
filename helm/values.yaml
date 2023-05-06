@@ -51,3 +51,5 @@ app:
   exampleValue: change me
   examplePassword: change me
   exampleConfig: change me
+  dockerUsername: change me
+  dockerPassword: change me
