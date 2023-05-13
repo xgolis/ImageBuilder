@@ -30,22 +30,22 @@ type Arg struct {
 
 const DefaultDockerHost = "unix:///var/run/docker.sock"
 
-func getDockerClient(client *client.Client, path string, username string) *DockerClient {
+func getDockerClient(client *client.Client, path string) *DockerClient {
 	return &DockerClient{
 		Client:   client,
 		Ctx:      context.Background(),
 		Path:     path,
-		Username: username,
+		Username: "xgolis",
 	}
 }
 
-func BuildRepo(dockerfilePath, username, app string, args []Arg) (string, error) {
+func BuildRepo(dockerfilePath, app string, args []Arg) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Fatal(err, " :unable to init client")
 	}
 
-	dockerClient := getDockerClient(cli, dockerfilePath, username)
+	dockerClient := getDockerClient(cli, dockerfilePath)
 
 	err = dockerClient.buildImage(app, args)
 	if err != nil {
@@ -57,13 +57,12 @@ func BuildRepo(dockerfilePath, username, app string, args []Arg) (string, error)
 		return "", fmt.Errorf("error while finding image: %v", err)
 	}
 	fmt.Printf("\nimage built: %s\n", dockerClient.ImageName)
-	// fmt.Println("konec")
 
 	err = dockerClient.pushImage()
 	if err != nil {
 		return "", fmt.Errorf("error while pushing image: %v", err)
 	}
-	fmt.Println("malo by to tam byt idk")
+
 	return dockerClient.ImageName, err
 }
 
@@ -74,7 +73,6 @@ func (c *DockerClient) buildImage(app string, args []Arg) error {
 	tar.Create("container/" + app + "/conf.tar")
 	tar.AddAll(app, false)
 	tar.Close()
-	// doriesit vymazavanie
 
 	dockerBuildContext, err := os.Open("container/" + app + "/conf.tar")
 	defer dockerBuildContext.Close()

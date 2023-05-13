@@ -69,7 +69,7 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Println(gitStruct, path)
-	image, err := builder.BuildRepo(path, gitStruct.Username, gitStruct.AppName, gitStruct.Args)
+	image, err := builder.BuildRepo(path, gitStruct.AppName, gitStruct.Args)
 	if err != nil {
 		sendError(&w, fmt.Errorf("error building image: %v\n", err))
 		return
@@ -81,7 +81,7 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	status := Response{
-		Message: "ok",
+		Message: "Image xgolis/" + gitStruct.AppName + ":latest built",
 	}
 	statusJson, err := json.Marshal(status)
 	if err != nil {
