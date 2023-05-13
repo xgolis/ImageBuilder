@@ -11,6 +11,10 @@ import (
 	"github.com/xgolis/ImageBuilder/git"
 )
 
+type Response struct {
+	Message string `json:"message"`
+}
+
 func MakeHandlers() *http.ServeMux {
 	mux := *http.NewServeMux()
 	mux.HandleFunc("/", pullGit)
@@ -23,31 +27,51 @@ func MakeHandlers() *http.ServeMux {
 //	    "gitToken":"localhost",
 //	    "username":"aha"
 //	}
+func sendError(w *http.ResponseWriter, err error) {
+	(*w).Header().Set("Content-Type", "application/json")
+
+	status := Response{
+		Message: err.Error(),
+	}
+	fmt.Print(status.Message)
+	statusJson, err := json.Marshal(status)
+	if err != nil {
+		http.Error(*w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	(*w).Write(statusJson)
+}
+
 func pullGit(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		fmt.Fprintf(w, "error while reading request: %v", err)
+		sendError(&w, fmt.Errorf("error while reading request: %v\n", err))
 		return
 	}
 
 	var gitStruct git.Git
 	err = json.Unmarshal(body, &gitStruct)
 	if err != nil {
-		fmt.Fprintf(w, "unmarshal error: %v", err)
+		sendError(&w, fmt.Errorf("unmarshal error: %v\n", err))
 		return
 	}
 
 	// fmt.Print(body.GitRepoPath)
 	path, err := git.Pull(gitStruct)
 	if err != nil {
-		fmt.Fprintf(w, "error while pulling git repository: %v", err)
+		sendError(&w, fmt.Errorf("error while pulling git repository: %v\n", err))
 		return
 	}
 
 	fmt.Println(gitStruct, path)
 	image, err := builder.BuildRepo(path, gitStruct.Username, gitStruct.AppName, gitStruct.Args)
 	if err != nil {
-		fmt.Fprintf(w, "error building image: %v", err)
+		sendError(&w, fmt.Errorf("error building image: %v\n", err))
 		return
 	}
 
@@ -55,14 +79,15 @@ func pullGit(w http.ResponseWriter, req *http.Request) {
 
 	os.RemoveAll("./" + gitStruct.Username)
 
-	statusOK := map[string]string{"status": "ok"}
-
-	statusJson, err := json.Marshal(statusOK)
+	w.Header().Set("Content-Type", "application/json")
+	status := Response{
+		Message: "ok",
+	}
+	statusJson, err := json.Marshal(status)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Write(statusJson)
 }
