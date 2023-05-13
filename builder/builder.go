@@ -52,18 +52,19 @@ func BuildRepo(dockerfilePath, app string, args []Arg) (string, error) {
 		return "", err
 	}
 
-	err = dockerClient.findImage(app)
-	if err != nil {
-		return "", fmt.Errorf("error while finding image: %v", err)
-	}
-	fmt.Printf("\nimage built: %s\n", dockerClient.ImageName)
+	dockerClient.ImageTag = "xgolis/" + app + ":latest"
+	// err = dockerClient.findImage(app)
+	// if err != nil {
+	// 	return "", fmt.Errorf("error while finding image: %v", err)
+	// }
+	// fmt.Printf("\nimage built: %s\n", dockerClient.ImageName)
 
 	err = dockerClient.pushImage()
 	if err != nil {
 		return "", fmt.Errorf("error while pushing image: %v", err)
 	}
 
-	return dockerClient.ImageName, err
+	return dockerClient.ImageTag, err
 }
 
 // dockerBuildContext source: https://stackoverflow.com/questions/46878793/golang-docker-api-reports-invalid-argument-while-hitting-imagebuild
