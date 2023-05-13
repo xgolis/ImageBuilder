@@ -119,6 +119,9 @@ func (c *DockerClient) findImage(app string) error {
 	}
 
 	for i := 0; i < len(images); i++ {
+		if len(images[i].RepoTags) == 0 {
+			continue
+		}
 		if images[i].RepoTags[0] == "xgolis/"+app+":latest" {
 			c.ImageTag = images[i].RepoTags[0]
 			c.ImageName = images[i].ID
