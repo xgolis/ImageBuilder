@@ -18,8 +18,8 @@ func NewApp() *App {
 		Server: &http.Server{
 			Addr:           "0.0.0.0:8082",
 			Handler:        mux,
-			ReadTimeout:    10 * time.Second,
-			WriteTimeout:   10 * time.Second,
+			ReadTimeout:    100 * time.Second,
+			WriteTimeout:   100 * time.Second,
 			MaxHeaderBytes: 1 << 20,
 		},
 	}
